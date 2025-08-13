@@ -36,10 +36,10 @@ export async function GET(request) {
     );
 
     if (!getStartBlockResponse.ok) {
-      throw new Error(`Failed to fetch block number: ${getBlockResponse.status}`);
+      throw new Error(`Failed to fetch block number: ${getStartBlockResponse.status}`);
     }
 
-    const blockData = await getBlockResponse.json();
+    const blockData = await getStartBlockResponse.json();
 
     // 检查API响应状态
     if (blockData.status === "0") {
@@ -57,7 +57,7 @@ export async function GET(request) {
     );
 
     if (!getEndBlockResponse.ok) {
-      throw new Error(`Failed to fetch block number: ${getBlockResponse.status}`);
+      throw new Error(`Failed to fetch block number: ${getEndBlockResponse.status}`);
     }
 
     const endBlockData = await getEndBlockResponse.json();
