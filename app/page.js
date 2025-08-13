@@ -665,87 +665,101 @@ export default function othetTool() {
 
   const selectAlpha = async () => {
 
-    const date = "2025-08-11"; // 示例日期
-    const address = "0xf0956b90724Db297759dD87d836bE9B4B0B7675d";
-    const contractAddress = "0x55d398326f99059ff775485246999027b3197955";
-    const response = await fetch(
-      `/api/etherscan?date=${date}&address=${address}&contractAddress=${contractAddress}`
+    // const date = "2025-08-11"; // 示例日期
+    // const address = "0xf0956b90724Db297759dD87d836bE9B4B0B7675d";
+
+    // const response = await fetch(
+    //   `/api/etherscan?date=${date}&address=${address}`
+    // );
+    // const result = await response.json();
+    // console.log(result);
+    notAddresses();
+    if (!date) {
+      setNotification({ message: 'error: 请填写时间', type: "error" });
+      hideNotification();
+      return;
+    }
+    if (!isValidDateFormat(date)) {
+      setNotification({ message: 'error: 请填写正确格式的时间', type: "error" });
+      hideNotification();
+      return;
+    }
+    const bnbResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
+    const data = await bnbResponse.json();
+    console.log(data.price);
+
+    const blockData = await fetch(
+      `/api/getBlock?date=${date}`
     );
-    const result = await response.json();
-    console.log(result);
-    // notAddresses();
-    // if (!date) {
-    //   setNotification({ message: 'error: 请填写时间', type: "error" });
-    //   hideNotification();
-    //   return;
-    // }
-    // if (!isValidDateFormat(date)) {
-    //   setNotification({ message: 'error: 请填写正确格式的时间', type: "error" });
-    //   hideNotification();
-    //   return;
-    // }
-    // const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
-    // const data = await response.json();
-    // console.log(data.price);
-    // // 构造所有请求的 Promise
-    // const fetchPromises = addresses.map(async (address, index) => {
-    //   const myAddress = address.address.toLowerCase();
+    const blockDataResult = await blockData.json();
+    console.log(blockDataResult);
 
-    //   return fetch("https://alphabot.cm/api/v2/batch_daily_trading_report", {
-    //     headers: {
-    //       "accept": "application/json, text/plain, */*",
-    //       "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-    //       "content-type": "application/json",
-    //       "priority": "u=1, i",
-    //       "sec-fetch-dest": "empty",
-    //       "sec-fetch-mode": "cors",
-    //       "sec-fetch-site": "same-origin"
-    //     },
-    //     referrer: "https://new.alphabot.cm/",
-    //     body: JSON.stringify({ addresses: [myAddress], date }),
-    //     method: "POST",
-    //     mode: "cors",
-    //     credentials: "omit"
-    //   })
-    //     .then(async resultText => {
-    //       const messageObj = await resultText.json();
-    //       let total_buy_volume_usdt = messageObj.data[myAddress].total_buy_volume_usdt;
-    //       let total_gas_fees_usdt = messageObj.data[myAddress].total_gas_fees_bnb;
-    //       let total_usdt = messageObj.data[myAddress].pnl_by_token["0x55d398326f99059ff775485246999027b3197955"];
-    //       let bnbToUsdt = ((total_gas_fees_usdt / 10 ** 18) * parseFloat(data.price)).toFixed(2);
-    //       let USDT = (total_usdt / 10 ** 18).toFixed(2);
-    //       let totalvalue = (total_buy_volume_usdt / 10 ** 18).toFixed(2);
-    //       let score = getScore(totalvalue);
-    //       let total = (USDT - bnbToUsdt).toFixed(2);
-    //       return {
-    //         index,
-    //         totalValue: totalvalue != "NaN" ? totalvalue : 0,
-    //         score: score != 0 ? score + 1 : 0,
-    //         bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
-    //         usdt: USDT != "NaN" ? USDT : 0,
-    //         totalUsdt: total != "NaN" ? total : 0,
-    //         message: resultText.status === 200 ? "查询成功" : "查询失败"
-    //       };
-    //     })
-    //     .catch(() => ({
-    //       index,
-    //       message: "查询失败"
-    //     }));
-    // });
+    // 构造所有请求的 Promise
+    const fetchPromises = addresses.map(async (address, index) => {
+      const myAddress = address.address.toLowerCase();
+      // usdt损耗
+      let usdtValue = 0;
+      // 交易量
+      let totalValue = 0;
+      // bnb损耗
+      let totalBNB = 0;
+      return fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=${blockDataResult.endBlock}&address=${address}`, {
+      })
+        .then(async resultText => {
+          const response = await resultText.json();
+          const result = response.result;
+          result.forEach(element => {
+            // 买入 
+            if (element.from == "0xf0956b90724db297759dd87d836be9b4b0b7675d" && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
+              let value = element.value / 10 ** 18;;
+              totalValue += value;
+              usdtValue -= value;
+              totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+            }
+            // 卖出
+            if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == "0xf0956b90724db297759dd87d836be9b4b0b7675d") {
+              usdtValue += element.value / 10 ** 18;
+              totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+            }
+          });
 
-    // // 并发请求
-    // const results = await Promise.all(fetchPromises);
+          // let total_buy_volume_usdt = messageObj.data[myAddress].total_buy_volume_usdt;
+          // let total_gas_fees_usdt = messageObj.data[myAddress].total_gas_fees_bnb;
+          // let total_usdt = messageObj.data[myAddress].pnl_by_token["0x55d398326f99059ff775485246999027b3197955"];
+          let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
+          // let USDT = (total_usdt / 10 ** 18).toFixed(2);
+          // let totalvalue = (total_buy_volume_usdt / 10 ** 18).toFixed(2);
+          let score = getScore(totalvalue);
+          let total = usdtValue.toFixed(2) + bnbToUsdt;
+          return {
+            index,
+            totalValue: totalvalue.toFixed(2) != "NaN" ? totalvalue.toFixed(2) : 0,
+            score: score != 0 ? score + 1 : 0,
+            bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
+            usdt: usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0,
+            totalUsdt: total != "NaN" ? total : 0,
+            message: resultText.status === 200 ? "查询成功" : "查询失败"
+          };
+        })
+        .catch(() => ({
+          index,
+          message: "查询失败"
+        }));
+    });
 
-    // // 批量更新 addresses
-    // setAddresses(prevAddresses => {
-    //   const updated = [...prevAddresses];
-    //   results.forEach(res => {
-    //     if (updated[res.index]) {
-    //       updated[res.index] = { ...updated[res.index], ...res };
-    //     }
-    //   });
-    //   return updated;
-    // });
+    // 并发请求
+    const results = await Promise.all(fetchPromises);
+
+    // 批量更新 addresses
+    setAddresses(prevAddresses => {
+      const updated = [...prevAddresses];
+      results.forEach(res => {
+        if (updated[res.index]) {
+          updated[res.index] = { ...updated[res.index], ...res };
+        }
+      });
+      return updated;
+    });
   }
 
   const goToTwitter = () => {
