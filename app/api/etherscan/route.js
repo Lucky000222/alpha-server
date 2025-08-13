@@ -3,6 +3,9 @@
 // 强制动态渲染
 export const dynamic = 'force-dynamic';
 
+// 配置为 Edge Runtime 以兼容 Cloudflare Pages
+export const runtime = 'edge';
+
 export async function GET(request) {
   console.log("API route called with URL:", request.url);
   const { searchParams } = new URL(request.url);
