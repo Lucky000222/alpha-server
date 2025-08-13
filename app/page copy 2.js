@@ -706,8 +706,7 @@ export default function othetTool() {
     const blockDataResult = await blockData.json();
     console.log(blockDataResult);
 
-    // 构造所有请求的 Promise
-    const fetchPromises = addresses.map(async (address, index) => {
+    for (const [index, address] of addresses.entries()) {
       const myAddress = address.address.toLowerCase();
       // usdt损耗
       let usdtValue = 0;
@@ -715,74 +714,74 @@ export default function othetTool() {
       let totalValue = 0;
       // bnb损耗
       let totalBNB = 0;
+      let resp = await fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=latest&address=${myAddress}`)
+      const response = await resp.json();
+      console.log("Full API Response:", response);
+      const result = response.result;
+      console.log("Result array:", result);
+      console.log("Result length:", result ? result.length : 0);
 
-      try {
-        let resp = await fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=latest&address=${myAddress}`);
-        const response = await resp.json();
-        console.log(`Address ${index + 1} - Full API Response:`, response);
-        const result = response.result;
-        console.log(`Address ${index + 1} - Result array:`, result);
-        console.log(`Address ${index + 1} - Result length:`, result ? result.length : 0);
-
-        if (result && Array.isArray(result)) {
-          result.forEach(element => {
-            if (Number(element.timeStamp) < Number(endTimestamp)) {
-              // 买入 
-              if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
-                let value = element.value / 10 ** 18;
-                totalValue += value;
-                usdtValue -= value;
-                totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
-              }
-              // 卖出
-              if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == myAddress) {
-                usdtValue += element.value / 10 ** 18;
-                totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
-              }
-            }
-          });
-        }
-
-        let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
-        let score = getScore(totalValue);
-        let total = (parseFloat(usdtValue.toFixed(2)) + parseFloat(bnbToUsdt)).toFixed(2);
-
-        return {
-          index,
-          totalValue: totalValue.toFixed(2) != "NaN" ? totalValue.toFixed(2) : 0,
-          score: score != 0 ? score + 1 : 0,
-          bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
-          usdt: usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0,
-          totalUsdt: total != "NaN" ? total : 0,
-          message: resp.status === 200 ? "查询成功" : "查询失败"
-        };
-      } catch (error) {
-        console.error(`Address ${index + 1} - Error:`, error);
-        return {
-          index,
-          totalValue: 0,
-          score: 0,
-          bnbToUsdt: 0,
-          usdt: 0,
-          totalUsdt: 0,
-          message: "查询失败"
-        };
-      }
-    });
-
-    // 并发请求
-    const results = await Promise.all(fetchPromises);
-
-    // 批量更新 addresses
-    setAddresses(prevAddresses => {
-      const updated = [...prevAddresses];
-      results.forEach(res => {
-        if (updated[res.index]) {
-          updated[res.index] = { ...updated[res.index], ...res };
+      result.forEach(element => {
+        if (Number(element.timeStamp) < Number(endTimestamp)) {
+          // 买入 
+          if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
+            let value = element.value / 10 ** 18;;
+            totalValue += value;
+            usdtValue -= value;
+            totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+          }
+          // 卖出
+          if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == myAddress) {
+            usdtValue += element.value / 10 ** 18;
+            totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+          }
         }
       });
-      return updated;
-    });
+
+      let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
+      let score = getScore(totalValue);
+      let total = (parseFloat(usdtValue.toFixed(2)) + parseFloat(bnbToUsdt)).toFixed(2);
+
+      if (await resp.status === 200) {
+        setAddresses(prevAddresses => {
+          const updatedAddresses = [...prevAddresses];
+          updatedAddresses[index].totalValue = totalValue.toFixed(2) != "NaN" ? totalValue.toFixed(2) : 0;
+          updatedAddresses[index].score = score != 0 ? score + 1 : 0;
+          updatedAddresses[index].bnbToUsdt = bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0;
+          updatedAddresses[index].usdt = usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0;
+          updatedAddresses[index].totalUsdt = total != "NaN" ? total : 0;
+          updatedAddresses[index].message = "查询成功";
+          return updatedAddresses;
+        });
+        await sleepRandomTime();
+      } else {
+        setAddresses(prevAddresses => {
+          const updatedAddresses = [...prevAddresses];
+          updatedAddresses[index].message = '查询失败';
+          return updatedAddresses;
+        });
+        return;
+      }
+
+
+
+      // return {
+      //   index,
+      //   totalValue: totalValue.toFixed(2) != "NaN" ? totalValue.toFixed(2) : 0,
+      //   score: score != 0 ? score + 1 : 0,
+      //   bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
+      //   usdt: usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0,
+      //   totalUsdt: total != "NaN" ? total : 0,
+      //   message: resultText.status === 200 ? "查询成功" : "查询失败"
+      // };
+
+
+      // 并发请求
+      // const results = await Promise.all(fetchPromises);
+
+      // 批量更新 addresses
+
+    }
   }
 
   const goToTwitter = () => {
