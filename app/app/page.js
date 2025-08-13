@@ -725,6 +725,7 @@ export default function othetTool() {
           console.log("Result length:", result ? result.length : 0);
 
           result.forEach(element => {
+if (element.timeStamp < endTimestamp) {
             // 买入 
             if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
               let value = element.value / 10 ** 18;;
@@ -737,6 +738,7 @@ export default function othetTool() {
               usdtValue += element.value / 10 ** 18;
               totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
             }
+}
           });
 
           let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
