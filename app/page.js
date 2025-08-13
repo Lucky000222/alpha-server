@@ -684,12 +684,23 @@ export default function othetTool() {
       hideNotification();
       return;
     }
+
+
+    // 日期转时间戳
+    const dateToTimestamp = (dateStr) => {
+      return Math.floor(new Date(dateStr).getTime() / 1000);
+    };
+    const startTimestamp = dateToTimestamp(date);
+    console.log("Timestamp:", startTimestamp);
+    const endTimestamp = startTimestamp + 86400;
+    console.log("End Timestamp:", endTimestamp);
+
     const bnbResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
     const data = await bnbResponse.json();
     console.log(data.price);
 
     const blockData = await fetch(
-      `/api/getBlock?date=${date}`
+      `/api/getBlock?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}`
     );
     const blockDataResult = await blockData.json();
     console.log(blockDataResult);
