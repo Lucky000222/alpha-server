@@ -720,16 +720,17 @@ export default function othetTool() {
         .then(async resultText => {
           const response = await resultText.json();
           const result = response.result;
+     console.log(result);
           result.forEach(element => {
             // 买入 
-            if (element.from == "0xf0956b90724db297759dd87d836be9b4b0b7675d" && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
+            if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
               let value = element.value / 10 ** 18;;
               totalValue += value;
               usdtValue -= value;
               totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
             }
             // 卖出
-            if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == "0xf0956b90724db297759dd87d836be9b4b0b7675d") {
+            if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == myAddress) {
               usdtValue += element.value / 10 ** 18;
               totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
             }
@@ -743,6 +744,7 @@ export default function othetTool() {
           // let totalvalue = (total_buy_volume_usdt / 10 ** 18).toFixed(2);
           let score = getScore(totalvalue);
           let total = usdtValue.toFixed(2) + bnbToUsdt;
+ console.log(total, score, bnbToUsdt, usdtValue);
           return {
             index,
             totalValue: totalvalue.toFixed(2) != "NaN" ? totalvalue.toFixed(2) : 0,
