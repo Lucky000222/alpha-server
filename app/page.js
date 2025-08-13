@@ -715,7 +715,7 @@ export default function othetTool() {
       let totalValue = 0;
       // bnb损耗
       let totalBNB = 0;
-      return fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=${blockDataResult.endBlock}&address=${address}`, {
+      return fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=latest&address=${myAddress}`, {
       })
         .then(async resultText => {
           const response = await resultText.json();
