@@ -898,7 +898,7 @@ export default function othetTool() {
 
 
               {alphaButton &&
-                <div className="flex flex-col md:flex-row gap-2 md:space-x-2">
+                <div className="flex flex-col md:flex-row gap-2 md:space-x-2 items-center">
                   <button className="btn btn-outline btn-secondary" onClick={selectAlpha}>查询</button>
                   <input
                     type="date"
@@ -906,6 +906,10 @@ export default function othetTool() {
                     onChange={e => setDate(e.target.value)}
                     className="outline-none border-2 border-sky-200 h-[48px] w-full md:w-[200px] p-3 rounded-md text-base"
                   />
+
+                  <div className="text-sm text-gray-500 flex items-center">
+                    <a className="text-blue-500" target="_blank">api速率问题查询, 响应可能时间长一些, 如遇失败请重新查询失败的地址</a>
+                  </div>
                 </div>
 
 
