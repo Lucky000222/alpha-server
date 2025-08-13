@@ -1,0 +1,37 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "@toruslabs/torus-embed": "^5.0.0",
+    "axios": "^1.7.7",
+    "cally": "^0.8.0",
+    "daisyui": "^4.12.10",
+    "date-fns": "^4.1.0",
+    "ethers": "^6.13.2",
+    "https-proxy-agent": "2.2.4",
+    "next": "14.2.5",
+    "node-fetch": "^3.3.2",
+    "node-libs-browser": "^2.2.1",
+    "prettier-plugin-tailwindcss": "^0.6.6",
+    "react": "^18",
+    "react-datepicker": "^7.5.0",
+    "react-dom": "^18",
+    "react-loader-spinner": "^6.1.6",
+    "react-router-dom": "^6.26.2",
+    "tw-elements": "^2.0.0"
+  },
+  "devDependencies": {
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1"
+  },
+  "packageManager": "yarn@3.6.3+sha512.d432ab8b22b89cb8b46649ebaf196159b0c1870904224771d75fdf8b55490aaa5de4d9f028deb0425f1513bff7843e97b9d117103795a23b12d2e7c1cedcf50f"
+}
