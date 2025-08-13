@@ -9,16 +9,14 @@ export const runtime = 'edge';
 export async function GET(request) {
   console.log("API route called with URL:", request.url);
   const { searchParams } = new URL(request.url);
-  // const date = searchParams.get('date');
   const address = searchParams.get('address');
   const startBlock = searchParams.get('startBlock');
-  const endBlock = searchParams.get('endBlock');
+  // const endBlock = searchParams.get('endBlock');
   const contractAddress = "0x55d398326f99059ff775485246999027b3197955";
 
+  console.log("Parameters:", { address, startBlock });
 
-  console.log("Parameters:", { address, startBlock, endBlock });
-
-  if (!address || !startBlock || !endBlock) {
+  if (!address || !startBlock) {
     return Response.json({ error: "Missing required parameters" }, { status: 400 });
   }
   const apiKey = "VNCNHS77F5SJRDXV9GQSQ5ASQW751B9SPS";
@@ -83,7 +81,7 @@ export async function GET(request) {
 
     // 查询 USDT 交易 - 使用Etherscan v2 API
     const queryResponse = await fetch(
-      `https://api.etherscan.io/v2/api?chainid=56&module=account&action=tokentx&contractaddress=${contractAddress}&address=${address}&page=1&offset=100&startblock=${startBlock}&endblock=${endBlock}&sort=asc&apikey=${apiKey}`
+      `https://api.etherscan.io/v2/api?chainid=56&module=account&action=tokentx&contractaddress=${contractAddress}&address=${address}&page=1&offset=100&startblock=${startBlock}&endblock=latest&sort=asc&apikey=${apiKey}`
     );
 
     if (!queryResponse.ok) {
@@ -97,7 +95,8 @@ export async function GET(request) {
       return Response.json({ error: "Etherscan API error", message: queryData.message, result: queryData.result }, { status: 400 });
     }
 
-    // 返回结果
+    // 返回结果 - 确保返回格式与前端期望一致
+    console.log("API Response:", queryData);
     return Response.json(queryData);
   } catch (error) {
     console.error("Error:", error);
