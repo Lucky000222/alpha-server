@@ -707,86 +707,114 @@ export default function othetTool() {
     console.log(blockDataResult);
 
     console.log("Processing addresses:", addresses);
-    // 构造所有请求的 Promise
-    const fetchPromises = addresses.map(async (address, index) => {
-      const myAddress = address.address.toLowerCase();
-      console.log(`Processing address ${index + 1}:`, myAddress);
-      // usdt损耗
-      let usdtValue = 0;
-      // 交易量
-      let totalValue = 0;
-      // bnb损耗
-      let totalBNB = 0;
+    // 分批处理函数，每秒最多4个请求
+    const processBatch = async (batch) => {
+      const batchPromises = batch.map(async (address, batchIndex) => {
+        const index = addresses.indexOf(address);
+        const myAddress = address.address.toLowerCase();
+        console.log(`Processing address ${index + 1}:`, myAddress);
 
-      try {
-        let resp = await fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=latest&address=${myAddress}`);
-        const response = await resp.json();
-        console.log(`Address ${index + 1} - Full API Response:`, response);
-        const result = response.result;
-        console.log(`Address ${index + 1} - Result array:`, result);
-        console.log(`Address ${index + 1} - Result length:`, result ? result.length : 0);
+        // usdt损耗
+        let usdtValue = 0;
+        // 交易量
+        let totalValue = 0;
+        // bnb损耗
+        let totalBNB = 0;
 
-        if (result && Array.isArray(result)) {
-          result.forEach(element => {
-            if (Number(element.timeStamp) < Number(endTimestamp)) {
-              // 买入 
-              if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
-                let value = element.value / 10 ** 18;
-                totalValue += value;
-                usdtValue -= value;
-                totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+        try {
+          let resp = await fetch(`/api/etherscan?startBlock=${blockDataResult.startBlock}&endBlock=latest&address=${myAddress}`);
+          const response = await resp.json();
+          console.log(`Address ${index + 1} - Full API Response:`, response);
+          const result = response.result;
+          console.log(`Address ${index + 1} - Result array:`, result);
+          console.log(`Address ${index + 1} - Result length:`, result ? result.length : 0);
+
+          if (result && Array.isArray(result)) {
+            result.forEach(element => {
+              if (Number(element.timeStamp) < Number(endTimestamp)) {
+                // 买入 
+                if (element.from == myAddress && element.to == "0xb300000b72deaeb607a12d5f54773d1c19c7028d") {
+                  let value = element.value / 10 ** 18;
+                  totalValue += value;
+                  usdtValue -= value;
+                  totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+                }
+                // 卖出
+                if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == myAddress) {
+                  usdtValue += element.value / 10 ** 18;
+                  totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
+                }
               }
-              // 卖出
-              if (element.from == "0xb300000b72deaeb607a12d5f54773d1c19c7028d" && element.to == myAddress) {
-                usdtValue += element.value / 10 ** 18;
-                totalBNB += (element.gasPrice * element.gasUsed) / 10 ** 18;
-              }
-            }
+            });
+          }
+
+          console.log(`Address ${index + 1} - Calculations:`, {
+            totalValue,
+            usdtValue,
+            totalBNB,
+            bnbPrice: data.price
           });
+
+          let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
+          let score = getScore(totalValue);
+          let total = (parseFloat(usdtValue.toFixed(2)) - parseFloat(bnbToUsdt)).toFixed(2);
+
+          console.log(`Address ${index + 1} - Final values:`, {
+            bnbToUsdt,
+            score,
+            total
+          });
+
+          return {
+            index,
+            totalValue: totalValue.toFixed(2) != "NaN" ? totalValue.toFixed(2) : 0,
+            score: score != 0 ? score + 1 : 0,
+            bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
+            usdt: usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0,
+            totalUsdt: total != "NaN" ? total : 0,
+            message: resp.status === 200 ? "查询成功" : "查询失败"
+          };
+        } catch (error) {
+          console.error(`Address ${index + 1} - Error:`, error);
+          return {
+            index,
+            totalValue: 0,
+            score: 0,
+            bnbToUsdt: 0,
+            usdt: 0,
+            totalUsdt: 0,
+            message: "查询失败"
+          };
         }
+      });
 
-        console.log(`Address ${index + 1} - Calculations:`, {
-          totalValue,
-          usdtValue,
-          totalBNB,
-          bnbPrice: data.price
-        });
+      return await Promise.all(batchPromises);
+    };
 
-        let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
-        let score = getScore(totalValue);
-        let total = (parseFloat(usdtValue.toFixed(2)) + parseFloat(bnbToUsdt)).toFixed(2);
+    // 将地址分批，每批4个
+    const batchSize = 4;
+    const batches = [];
+    for (let i = 0; i < addresses.length; i += batchSize) {
+      batches.push(addresses.slice(i, i + batchSize));
+    }
 
-        console.log(`Address ${index + 1} - Final values:`, {
-          bnbToUsdt,
-          score,
-          total
-        });
+    console.log(`Processing ${addresses.length} addresses in ${batches.length} batches of ${batchSize}`);
 
-        return {
-          index,
-          totalValue: totalValue.toFixed(2) != "NaN" ? totalValue.toFixed(2) : 0,
-          score: score != 0 ? score + 1 : 0,
-          bnbToUsdt: bnbToUsdt != "NaN" ? "-" + bnbToUsdt : 0,
-          usdt: usdtValue.toFixed(2) != "NaN" ? usdtValue.toFixed(2) : 0,
-          totalUsdt: total != "NaN" ? total : 0,
-          message: resp.status === 200 ? "查询成功" : "查询失败"
-        };
-      } catch (error) {
-        console.error(`Address ${index + 1} - Error:`, error);
-        return {
-          index,
-          totalValue: 0,
-          score: 0,
-          bnbToUsdt: 0,
-          usdt: 0,
-          totalUsdt: 0,
-          message: "查询失败"
-        };
+    // 分批处理，每批之间等待1秒
+    const allResults = [];
+    for (let i = 0; i < batches.length; i++) {
+      console.log(`Processing batch ${i + 1}/${batches.length}`);
+      const batchResults = await processBatch(batches[i]);
+      allResults.push(...batchResults);
+
+      // 如果不是最后一批，等待1秒
+      if (i < batches.length - 1) {
+        console.log(`Waiting 1 second before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-    });
+    }
 
-    // 并发请求
-    const results = await Promise.all(fetchPromises);
+    const results = allResults;
     console.log("All results:", results);
 
     // 批量更新 addresses
