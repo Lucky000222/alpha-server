@@ -19,20 +19,20 @@ export async function GET(request) {
     return Response.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
-  const apiKey = process.env.ETHERSCAN_API_KEY;
+  const apiKey = "VNCNHS77F5SJRDXV9GQSQ5ASQW751B9SPS";
   console.log(apiKey);
 
   console.log("API Key exists:", !!apiKey);
   console.log("API Key length:", apiKey ? apiKey.length : 0);
 
-  if (!apiKey) {
-    return Response.json({
-      error: "Etherscan API key not configured",
-      message: "Please set ETHERSCAN_API_KEY in .env.local file",
-      example: "ETHERSCAN_API_KEY=your_api_key_here"
-    }, { status: 500 });
-  }
-
+  // if (!apiKey) {
+  //   return Response.json({
+  //     error: "Etherscan API key not configured",
+  //     message: "Please set ETHERSCAN_API_KEY in .env.local file",
+  //     example: "ETHERSCAN_API_KEY=your_api_key_here"
+  //   }, { status: 500 });
+  // }
+  console.log("1111111111111111111111");
   try {
     // 日期转时间戳
     const dateToTimestamp = (dateStr) => {
