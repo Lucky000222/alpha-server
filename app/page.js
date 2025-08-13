@@ -706,9 +706,11 @@ export default function othetTool() {
     const blockDataResult = await blockData.json();
     console.log(blockDataResult);
 
+    console.log("Processing addresses:", addresses);
     // 构造所有请求的 Promise
     const fetchPromises = addresses.map(async (address, index) => {
       const myAddress = address.address.toLowerCase();
+      console.log(`Processing address ${index + 1}:`, myAddress);
       // usdt损耗
       let usdtValue = 0;
       // 交易量
@@ -743,9 +745,22 @@ export default function othetTool() {
           });
         }
 
+        console.log(`Address ${index + 1} - Calculations:`, {
+          totalValue,
+          usdtValue,
+          totalBNB,
+          bnbPrice: data.price
+        });
+
         let bnbToUsdt = (totalBNB * parseFloat(data.price)).toFixed(2);
         let score = getScore(totalValue);
         let total = (parseFloat(usdtValue.toFixed(2)) + parseFloat(bnbToUsdt)).toFixed(2);
+
+        console.log(`Address ${index + 1} - Final values:`, {
+          bnbToUsdt,
+          score,
+          total
+        });
 
         return {
           index,
@@ -772,15 +787,19 @@ export default function othetTool() {
 
     // 并发请求
     const results = await Promise.all(fetchPromises);
+    console.log("All results:", results);
 
     // 批量更新 addresses
     setAddresses(prevAddresses => {
+      console.log("Previous addresses:", prevAddresses);
       const updated = [...prevAddresses];
       results.forEach(res => {
+        console.log(`Updating address ${res.index}:`, res);
         if (updated[res.index]) {
           updated[res.index] = { ...updated[res.index], ...res };
         }
       });
+      console.log("Updated addresses:", updated);
       return updated;
     });
   }
