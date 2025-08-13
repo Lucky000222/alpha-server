@@ -695,16 +695,16 @@ export default function othetTool() {
     // const endTimestamp = startTimestamp + 86400;
     // console.log("End Timestamp:", endTimestamp);
 
-    // const bnbResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
-    // const data = await bnbResponse.json();
-    // console.log(data.price);
+    const bnbResponse = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT');
+    const data = await bnbResponse.json();
+    console.log(data.price);
 
-    // const blockData = await fetch(
-    //   `/api/getBlock?startTimestamp=${startTimestamp}`
-    //   //  `/api/getBlock?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}`
-    // );
-    // const blockDataResult = await blockData.json();
-    // console.log(blockDataResult);
+    const blockData = await fetch(
+      `/api/getBlock?startTimestamp=${startTimestamp}`
+      //  `/api/getBlock?startTimestamp=${startTimestamp}&endTimestamp=${endTimestamp}`
+    );
+    const blockDataResult = await blockData.json();
+    console.log(blockDataResult);
 
     // 构造所有请求的 Promise
     for (const [index, address] of addresses.entries()) {
