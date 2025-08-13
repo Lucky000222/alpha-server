@@ -10,9 +10,9 @@ export async function GET(request) {
   console.log("API route called with URL:", request.url);
   const { searchParams } = new URL(request.url);
   const startTimestamp = searchParams.get('startTimestamp');
-  const endTimestamp = searchParams.get('endTimestamp');
+  // const endTimestamp = searchParams.get('endTimestamp');
 
-  console.log("Parameters:", { startTimestamp, endTimestamp });
+  console.log("Parameters:", { startTimestamp });
 
   // if (!date ) {
   //   return Response.json({ error: "Missing required parameters" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function GET(request) {
 
     // 获取起始区块号 - 使用Etherscan v2 API
     const getStartBlockResponse = await fetch(
-      `https://api.etherscan.io/v2/api?chainid=56&module=block&action=getblocknobytime&timestamp=${parseInt(startTimestamp)}&closest=before&apikey=${apiKey}`
+      `https://api.etherscan.io/v2/api?chainid=56&module=block&action=getblocknobytime&timestamp=${startTimestamp}&closest=before&apikey=${apiKey}`
       // 移除代理配置以避免重定向错误
     );
 
@@ -48,40 +48,39 @@ export async function GET(request) {
     }
 
     const startBlock = blockData.result;
-
-
-    // let endTimestamp = timestamp + 86400;
-    // 获取结束区块号 - 使用Etherscan v2 API
-    const getEndBlockResponse = await fetch(
-      `https://api.etherscan.io/v2/api?chainid=56&module=block&action=getblocknobytime&timestamp=${parseInt(endTimestamp)}&closest=before&apikey=${apiKey}`
-      // 移除代理配置以避免重定向错误
-    );
-
-    if (!getEndBlockResponse.ok) {
-      throw new Error(`Failed to fetch block number: ${getEndBlockResponse.status}`);
-    }
-
-    const endBlockData = await getEndBlockResponse.json();
-
-    // 检查API响应状态
-    if (endBlockData.status === "0") {
-      return Response.json({ error: "Etherscan API error", message: endBlockData.message, result: endBlockData.result }, { status: 400 });
-    }
-    const endBlock = endBlockData.result;
-
-
-    if (!startBlock || !endBlock) {
-      return Response.json({ error: "Failed to fetch block number" }, { status: 500 });
-    }
-
     console.log("Start block:", startBlock);
-    console.log("End block:", endBlock);
 
-    return Response.json({ startBlock, endBlock });
+
+    // // let endTimestamp = timestamp + 86400;
+    // // 获取结束区块号 - 使用Etherscan v2 API
+    // const getEndBlockResponse = await fetch(
+    //   `https://api.etherscan.io/v2/api?chainid=56&module=block&action=getblocknobytime&timestamp=${endTimestamp}&closest=before&apikey=${apiKey}`
+    //   // 移除代理配置以避免重定向错误
+    // );
+
+    // if (!getEndBlockResponse.ok) {
+    //   throw new Error(`Failed to fetch block number: ${getEndBlockResponse.status}`);
+    // }
+
+    // const endBlockData = await getEndBlockResponse.json();
+
+    // // 检查API响应状态
+    // if (endBlockData.status === "0") {
+    //   return Response.json({ error: "Etherscan API error", message: endBlockData.message, result: endBlockData.result }, { status: 400 });
+    // }
+    // const endBlock = endBlockData.result;
+
+
+    // if (!startBlock || !endBlock) {
+    //   return Response.json({ error: "Failed to fetch block number" }, { status: 500 });
+    // }
+
+    // console.log("End block:", endBlock);
+    return Response.json({ startBlock });
+    // return Response.json({ startBlock, endBlock });
 
   } catch (error) {
     console.error("Error:", error);
     return Response.json({ error: "Internal server error", details: error.message }, { status: 500 });
   }
 }
-
